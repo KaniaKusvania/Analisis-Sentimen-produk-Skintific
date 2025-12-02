@@ -14,7 +14,7 @@ Penelitian ini bertujuan untuk:
 ***
 ## 🛠️ Peta Jalan Proyek: Dari Teks Kasar ke Prediksi Model
 
-### 1. 📂 Data & Sumber
+### A. 📂 Data & Sumber
 
 | Keterangan | Detail |
 | :--- | :--- |
@@ -22,23 +22,17 @@ Penelitian ini bertujuan untuk:
 | **Target** | Mengklasifikasikan sentimen ulasan ke dalam 4 kategori: **Positif, Negatif, Netral,** dan **Other**. |
 | **Ukuran Data** | **1838 entri** ulasan. |
 
-### 2. 📊 Exploratory Data Analysis (EDA)
+### B. 📊 Exploratory Data Analysis (EDA)
 
-#### Tipe Kulit 
+#### 1. Tipe Kulit 
 * Dataset ulasan didominasi oleh pengguna dengan tipe kulit **Neutral** ($\text{1202}$) dan **Combination** ($\text{750}$).
 * Tingkat frekuensi yang **tidak merata (*imbalanced*)** antar kategori tipe kulit dicatat sebagai karakteristik dataset.
 
-#### Kata Kunci Ulasan (*Word Cloud*) 
-
-[Image of the Word Cloud of Comments]
-
+#### 2. Kata Kunci Ulasan (*Word Cloud*) 
 * Kata-kata yang paling dominan adalah “aku”, “dan”, “juga”, “tapi”, dan “karena” (kata umum).
 * Kata kunci yang sering muncul dan relevan dengan produk meliputi: **“skin barrier”, “moisturizer”, “produk”, “kulit”, “bagus”, “cocok”**, dan **“jerawat”**.
 
-#### Distribusi Sentimen 
-
-[Image of the Sentiment Distribution Bar Chart]
-
+#### 3. Distribusi Sentimen 
 * Sentimen **Neutral** ($\text{867}$) adalah kategori yang paling dominan, diikuti oleh sentimen **Positive** ($\text{669}$).
 * Sentimen **Negative** ($\text{294}$) jumlahnya jauh lebih sedikit.
 * Secara keseluruhan, persepsi pengguna cenderung **netral hingga positif**.
