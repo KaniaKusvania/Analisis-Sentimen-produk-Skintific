@@ -1,4 +1,4 @@
-🚀 Ringkasan Project — Analisis Sentimen Produk Skintific
+# 🚀 Ringkasan Project — Analisis Sentimen Produk Skintific
 
 Di era digital, ulasan konsumen menjadi salah satu faktor terkuat dalam menentukan keberhasilan sebuah produk skincare. Tantangannya adalah: ulasan sangat banyak dan tidak mungkin dianalisis secara manual secara cepat.
 
