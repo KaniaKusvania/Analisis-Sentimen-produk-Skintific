@@ -1,9 +1,9 @@
 # Anggota Kelompok:
 | Nama | Nim |
 | :--- | :--- |
-| **1. Annisa Diyan Novitasari-202210370311064** |
-| **2. Kania Kusvania-202210370311078** |
-| **3. Asyifa Hafizah Putri-202210370311081** | 
+| **1. Annisa Diyan Novitasari** | 202210370311064 |
+| **2. Kania Kusvania** | 202210370311078 |
+| **3. Asyifa Hafizah Putri** | 202210370311081 |
 
 # 💄 Analisis Sentimen Ulasan Moisturizer Skintific Menggunakan Machine Learning
 
