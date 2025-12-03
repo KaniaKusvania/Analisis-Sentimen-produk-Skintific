@@ -76,7 +76,7 @@ Proyek ini mengeksplorasi dan mengevaluasi kinerja tiga model utama, menggunakan
 | Model | Akurasi | F1-Score (W. Avg) | Metrik Kunci & *Best Params* |
 | :--- | :--- | :--- | :--- |
 | **SVC (Tuned)** | 0.8940 | 0.89 | **Neutral** *Recall* 1.00; **Positive** *Precision* 0.99. $\text{Params}: \text{'C': 1, 'kernel': 'linear'}$. |
-| **Random Forest (Tuned)** | 0.8940 | 0.89 | **Neutral** *Recall* 1.00; **Positive** *Precision* 0.97. $\text{Params}: \text{'max\_depth': 20, 'min\_samples\_leaf': 2, 'min\_samples\_split': 2, 'n\_estimators': 100}$. |
+| **Random Forest (Tuned)** | 0.8940 | 0.89 | **Neutral** *Recall* 1.00; **Positive** *Precision* 0.97. Params: {'max_depth': 20, 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}. | 
 | **MLP (Deep Learning)** | **0.8995** | 0.89 | Kinerja sedikit unggul, *Recall* 1.00 pada **Neutral**. | N/A |
 | **SVC + IndoBERT (Transfer Learning)** | 0.7228% | N/A | Akurasi lebih rendah dari model berbasis *term-frequency*. | N/A |
 
