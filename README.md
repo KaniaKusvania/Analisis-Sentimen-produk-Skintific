@@ -61,7 +61,7 @@ Data mentah melalui serangkaian tahapan pembersihan dan transformasi untuk diper
 
 ### B. Metode Ekstraksi Fitur Teks
 
-| Metode | Deskripsi | $\text{max\_features}$ |
+| Metode | Deskripsi | Feature $\text{max\_features}$ |
 | :--- | :--- | :--- |
 | **TF-IDF** | Merepresentasikan kata berdasarkan frekuensi kemunculannya (TF) dan seberapa unik kata tersebut di seluruh dokumen (IDF). | $\text{5000}$ |
 | **Bag-of-Words (BoW)** | Merepresentasikan teks sebagai vektor frekuensi hitungan (*count frequency*) setiap kata. | $\text{5000}$ |
