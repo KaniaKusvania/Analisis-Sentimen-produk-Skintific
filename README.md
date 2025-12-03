@@ -1,3 +1,8 @@
+# Anggota Kelompok:
+| **1. Annisa Diyan Novitasari-202210370311064** |
+| **2. Kania Kusvania-202210370311078** |
+| **3. Asyifa Hafizah Putri-202210370311081** | 
+
 # 💄 Analisis Sentimen Ulasan Moisturizer Skintific Menggunakan Machine Learning
 
 Proyek ini berfokus pada pengembangan sistem **analisis sentimen otomatis** untuk memahami dan mengukur **persepsi serta kepuasan pelanggan** terhadap produk *moisturizer* dari *brand* **Skintific** berdasarkan ulasan yang dikumpulkan dari platform **Female Daily**.
