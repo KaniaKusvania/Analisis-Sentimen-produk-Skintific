@@ -1,37 +1,36 @@
 import streamlit as st
 import pandas as pd
-from pathlib import Path
+import numpy as np
 import joblib
 import os
-import numpy as np
+import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
-import re
+from pathlib import Path
 
 # ===============================
 # STREAMLIT CONFIG (WAJIB PALING ATAS)
 # ===============================
 st.set_page_config(
-    page_title="                                                                                                                                                                                Analisis Sentimen",
+    page_title="Analisis Sentimen",
     layout="wide"
 )
 
 # ===============================
-# PATH KONFIGURASI (AMAN)
+# PATH KONFIGURASI (AMAN LOKAL & CLOUD)
 # ===============================
 BASE_DIR = Path(__file__).resolve().parent.parent
-MODEL_DIR = os.path.join(BASE_DIR, "model")
+MODEL_DIR = BASE_DIR / "model"
 
-# Define file paths
-FILE_DF = BASE_DIR / "model" / "df_with_sentiment_revised.csv"
-FILE_MODEL = BASE_DIR / "model" / "best_svc_model.pkl"
-FILE_VECTORIZER = BASE_DIR / "model" / "ngram_vectorizer.pkl"
-FILE_LE = BASE_DIR / "model" / "label_encoder.pkl"
-FILE_SELECTOR = BASE_DIR / "model" / "chi2_selector_ngram.pkl"
+FILE_DF = MODEL_DIR / "df_with_sentiment_revised.csv"
+FILE_MODEL = MODEL_DIR / "best_svc_model.pkl"
+FILE_VECTORIZER = MODEL_DIR / "ngram_vectorizer.pkl"
+FILE_LE = MODEL_DIR / "label_encoder.pkl"
+FILE_SELECTOR = MODEL_DIR / "chi2_selector_ngram.pkl"
 
 # ===============================
-# METRIK MODEL (HASIL EVALUASI)
+# METRIK MODEL (STATIS – HASIL EVALUASI)
 # ===============================
 MODEL_ACCURACY = 0.8540
 CLASSIFICATION_REPORT = """
@@ -49,54 +48,34 @@ CONF_MATRIX = np.array([
 ])
 
 # ===============================
-# LOAD ASSET (CACHE)
+# LOAD DATA & MODEL (CACHE)
 # ===============================
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def load_assets():
     df = pd.read_csv(FILE_DF)
-    le = joblib.load(FILE_LE)
+    model = joblib.load(FILE_MODEL)
     vectorizer = joblib.load(FILE_VECTORIZER)
     selector = joblib.load(FILE_SELECTOR)
-    model = joblib.load(FILE_MODEL)
-    return df, le, vectorizer, selector, model
+    label_encoder = joblib.load(FILE_LE)
+    return df, model, vectorizer, selector, label_encoder
 
 
 try:
-    df, le, vectorizer, selector, model = load_assets()
+    df, model, vectorizer, selector, le = load_assets()
 except Exception as e:
     st.error(f"❌ Gagal memuat model atau data: {e}")
     st.stop()
 
 # ===============================
-# FUNGSI PREDIKSI
+# FUNGSI PREDIKSI (LOGIKA BENAR)
 # ===============================
-def predict_sentiment(text):
-    # --- Preprocessing ---
+def predict_sentiment(text: str) -> str:
     text = text.lower().strip()
     text = re.sub(r"[^a-zA-Z\s]", "", text)
 
-    # --- N-gram features ---
     X_ngram = vectorizer.transform([text])
+    X_selected = selector.transform(X_ngram)
 
-    # --- HITUNG SELISIH FITUR ---
-    expected_features = selector.n_features_in_
-    current_features = X_ngram.shape[1]
-    missing_features = expected_features - current_features
-
-    if missing_features < 0:
-        raise ValueError("Jumlah fitur input lebih besar dari yang diharapkan selector.")
-
-    # --- Tambahkan fitur numerik dummy (0) ---
-    if missing_features > 0:
-        dummy_features = np.zeros((X_ngram.shape[0], missing_features))
-        X_full = np.hstack([X_ngram.toarray(), dummy_features])
-    else:
-        X_full = X_ngram.toarray()
-
-    # --- Feature Selection ---
-    X_selected = selector.transform(X_full)
-
-    # --- Prediction ---
     pred = model.predict(X_selected)
     return le.inverse_transform(pred)[0].upper()
 
@@ -104,7 +83,9 @@ def predict_sentiment(text):
 # DASHBOARD UI
 # ===============================
 st.title("🛒 Analisis Sentimen Ulasan Produk")
-st.markdown("Model: **Support Vector Classifier (SVC) + Chi-Square Feature Selection (N-gram)**")
+st.markdown(
+    "**Model:** Support Vector Classifier (SVC) + Chi-Square Feature Selection (N-gram)"
+)
 st.divider()
 
 # ===============================
@@ -112,14 +93,12 @@ st.divider()
 # ===============================
 st.header("📊 Distribusi Sentimen")
 
-# Hitung distribusi sentimen
 sentiment_counts = (
     df["sentiment_category"]
     .value_counts()
     .reset_index()
 )
 
-# Rename kolom secara eksplisit (WAJIB)
 sentiment_counts.columns = ["Sentimen", "Jumlah"]
 
 col1, col2 = st.columns(2)
@@ -194,20 +173,16 @@ if st.button("Prediksi"):
         st.warning("Teks tidak boleh kosong.")
 
 # ===============================
-# SIDEBAR – FITUR TERBAIK
+# SIDEBAR – TOP N-GRAM
 # ===============================
 st.sidebar.header("🔍 Fitur N-gram Terbaik")
 
-# Nama fitur N-gram saja
 ngram_features = np.array(vectorizer.get_feature_names_out())
-num_ngram = len(ngram_features)
+scores = selector.scores_
 
-# Mask selector hanya untuk bagian N-gram
-selector_mask = selector.get_support()[:num_ngram]
-selector_scores = selector.scores_[:num_ngram]
-
-selected_features = ngram_features[selector_mask]
-selected_scores = selector_scores[selector_mask]
+mask = selector.get_support()
+selected_features = ngram_features[mask]
+selected_scores = scores[mask]
 
 top_features = (
     pd.DataFrame({
@@ -218,4 +193,4 @@ top_features = (
     .head(10)
 )
 
-st.sidebar.dataframe(top_features)
+st.sidebar.dataframe(top_features, use_container_width=True)
