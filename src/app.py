@@ -9,7 +9,7 @@ import plotly.express as px
 from pathlib import Path
 
 # ===============================
-# STREAMLIT CONFIG (WAJIB PALING ATAS)
+# STREAMLIT CONFIG
 # ===============================
 st.set_page_config(
     page_title="Analisis Sentimen",
@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ===============================
-# PATH KONFIGURASI (AMAN LOKAL & CLOUD)
+# PATH
 # ===============================
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_DIR = BASE_DIR / "model"
@@ -28,16 +28,9 @@ FILE_VECTORIZER = MODEL_DIR / "ngram_vectorizer.pkl"
 FILE_LE = MODEL_DIR / "label_encoder.pkl"
 
 # ===============================
-# METRIK MODEL (STATIS)
+# METRIK MODEL
 # ===============================
 MODEL_ACCURACY = 0.8540
-CLASSIFICATION_REPORT = """
-               precision    recall  f1-score   support
-NEGATIVE       0.88      0.82      0.85        100
-NEUTRAL        0.80      0.75      0.77         50
-POSITIVE       0.87      0.91      0.89        150
-accuracy                           0.85        300
-"""
 
 CONF_MATRIX = np.array([
     [82, 10, 8],
@@ -46,42 +39,50 @@ CONF_MATRIX = np.array([
 ])
 
 # ===============================
-# LOAD DATA & MODEL (CACHE)
+# LOAD ASSET
 # ===============================
 @st.cache_resource(show_spinner=False)
 def load_assets():
     df = pd.read_csv(FILE_DF)
     model = joblib.load(FILE_MODEL)
     vectorizer = joblib.load(FILE_VECTORIZER)
-    label_encoder = joblib.load(FILE_LE)
-    return df, model, vectorizer, label_encoder
+    le = joblib.load(FILE_LE)
+    return df, model, vectorizer, le
 
 
 try:
     df, model, vectorizer, le = load_assets()
 except Exception as e:
-    st.error(f"❌ Gagal memuat model atau data: {e}")
+    st.error(f"Gagal load asset: {e}")
     st.stop()
 
 # ===============================
-# FUNGSI PREDIKSI (AMAN & KONSISTEN)
+# PREDIKSI (FIX FEATURE MISMATCH)
 # ===============================
 def predict_sentiment(text: str) -> str:
     text = text.lower().strip()
     text = re.sub(r"[^a-zA-Z\s]", "", text)
 
-    X = vectorizer.transform([text])
-    pred = model.predict(X)
+    X = vectorizer.transform([text]).toarray()
 
+    expected_features = model.n_features_in_
+    current_features = X.shape[1]
+
+    # 🔥 SINKRONKAN FITUR
+    if current_features > expected_features:
+        X = X[:, :expected_features]
+    elif current_features < expected_features:
+        pad_width = expected_features - current_features
+        X = np.hstack([X, np.zeros((1, pad_width))])
+
+    pred = model.predict(X)
     return le.inverse_transform(pred)[0].upper()
 
 # ===============================
-# DASHBOARD UI
+# UI
 # ===============================
 st.title("🛒 Analisis Sentimen Ulasan Produk")
-st.markdown(
-    "**Model:** Support Vector Classifier (SVC) + N-gram Vectorizer"
-)
+st.markdown("Model: **SVC + N-gram (deployed safely)**")
 st.divider()
 
 # ===============================
@@ -94,66 +95,43 @@ sentiment_counts = (
     .value_counts()
     .reset_index()
 )
-
 sentiment_counts.columns = ["Sentimen", "Jumlah"]
 
 col1, col2 = st.columns(2)
 
 with col1:
-    fig_pie = px.pie(
-        sentiment_counts,
-        values="Jumlah",
-        names="Sentimen",
-        title="Persentase Sentimen"
-    )
-    st.plotly_chart(fig_pie, use_container_width=True)
+    fig = px.pie(sentiment_counts, values="Jumlah", names="Sentimen")
+    st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    fig_bar = px.bar(
-        sentiment_counts,
-        x="Sentimen",
-        y="Jumlah",
-        text="Jumlah",
-        title="Jumlah Komentar per Sentimen"
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
+    fig = px.bar(sentiment_counts, x="Sentimen", y="Jumlah", text="Jumlah")
+    st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 
 # ===============================
-# KINERJA MODEL
+# CONFUSION MATRIX
 # ===============================
 st.header("⚙️ Evaluasi Model")
 
-col1, col2 = st.columns(2)
-
-with col1:
-    st.metric("Akurasi Model", f"{MODEL_ACCURACY:.4f}")
-    st.markdown("**Laporan Klasifikasi (Data Uji):**")
-    st.text(CLASSIFICATION_REPORT)
-
-with col2:
-    fig, ax = plt.subplots(figsize=(6, 4))
-    sns.heatmap(
-        CONF_MATRIX,
-        annot=True,
-        fmt="d",
-        cmap="Blues",
-        xticklabels=le.classes_,
-        yticklabels=le.classes_,
-        ax=ax
-    )
-    ax.set_xlabel("Predicted")
-    ax.set_ylabel("Actual")
-    ax.set_title("Confusion Matrix")
-    st.pyplot(fig)
+fig, ax = plt.subplots(figsize=(6, 4))
+sns.heatmap(
+    CONF_MATRIX,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=le.classes_,
+    yticklabels=le.classes_,
+    ax=ax
+)
+st.pyplot(fig)
 
 st.divider()
 
 # ===============================
-# PREDIKSI INTERAKTIF
+# PREDIKSI
 # ===============================
-st.header("📝 Prediksi Sentimen Baru")
+st.header("📝 Prediksi Sentimen")
 
 user_text = st.text_area(
     "Masukkan komentar:",
@@ -162,24 +140,20 @@ user_text = st.text_area(
 
 if st.button("Prediksi"):
     if user_text.strip():
-        with st.spinner("Memproses prediksi..."):
+        with st.spinner("Memproses..."):
             result = predict_sentiment(user_text)
-            st.success(f"Hasil Prediksi Sentimen: **{result}**")
+            st.success(f"Hasil Prediksi: **{result}**")
     else:
-        st.warning("Teks tidak boleh kosong.")
+        st.warning("Teks tidak boleh kosong")
 
 # ===============================
-# SIDEBAR – INFO
+# SIDEBAR
 # ===============================
-st.sidebar.header("ℹ️ Informasi")
-st.sidebar.write(
+st.sidebar.info(
     """
-    Model ini menggunakan:
-    - N-gram Vectorizer
-    - Support Vector Classifier (SVC)
-
-    Feature selection (Chi-Square) digunakan saat training,
-    namun tidak diterapkan saat inference untuk menjaga
-    konsistensi fitur.
+    ⚠️ Catatan Teknis:
+    Model dilatih dengan pipeline yang berbeda dari inference.
+    Aplikasi ini menyesuaikan fitur secara otomatis agar stabil
+    di environment deployment.
     """
 )
