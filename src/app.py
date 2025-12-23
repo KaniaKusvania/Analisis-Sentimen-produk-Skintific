@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import os
 import re
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -27,10 +26,9 @@ FILE_DF = MODEL_DIR / "df_with_sentiment_revised.csv"
 FILE_MODEL = MODEL_DIR / "best_svc_model.pkl"
 FILE_VECTORIZER = MODEL_DIR / "ngram_vectorizer.pkl"
 FILE_LE = MODEL_DIR / "label_encoder.pkl"
-FILE_SELECTOR = MODEL_DIR / "chi2_selector_ngram.pkl"
 
 # ===============================
-# METRIK MODEL (STATIS – HASIL EVALUASI)
+# METRIK MODEL (STATIS)
 # ===============================
 MODEL_ACCURACY = 0.8540
 CLASSIFICATION_REPORT = """
@@ -55,28 +53,26 @@ def load_assets():
     df = pd.read_csv(FILE_DF)
     model = joblib.load(FILE_MODEL)
     vectorizer = joblib.load(FILE_VECTORIZER)
-    selector = joblib.load(FILE_SELECTOR)
     label_encoder = joblib.load(FILE_LE)
-    return df, model, vectorizer, selector, label_encoder
+    return df, model, vectorizer, label_encoder
 
 
 try:
-    df, model, vectorizer, selector, le = load_assets()
+    df, model, vectorizer, le = load_assets()
 except Exception as e:
     st.error(f"❌ Gagal memuat model atau data: {e}")
     st.stop()
 
 # ===============================
-# FUNGSI PREDIKSI (LOGIKA BENAR)
+# FUNGSI PREDIKSI (AMAN & KONSISTEN)
 # ===============================
 def predict_sentiment(text: str) -> str:
     text = text.lower().strip()
     text = re.sub(r"[^a-zA-Z\s]", "", text)
 
-    X_ngram = vectorizer.transform([text])
-    X_selected = selector.transform(X_ngram)
+    X = vectorizer.transform([text])
+    pred = model.predict(X)
 
-    pred = model.predict(X_selected)
     return le.inverse_transform(pred)[0].upper()
 
 # ===============================
@@ -84,7 +80,7 @@ def predict_sentiment(text: str) -> str:
 # ===============================
 st.title("🛒 Analisis Sentimen Ulasan Produk")
 st.markdown(
-    "**Model:** Support Vector Classifier (SVC) + Chi-Square Feature Selection (N-gram)"
+    "**Model:** Support Vector Classifier (SVC) + N-gram Vectorizer"
 )
 st.divider()
 
@@ -173,33 +169,17 @@ if st.button("Prediksi"):
         st.warning("Teks tidak boleh kosong.")
 
 # ===============================
-# SIDEBAR – TOP N-GRAM (AMAN)
+# SIDEBAR – INFO
 # ===============================
-st.sidebar.header("🔍 Fitur N-gram Terbaik")
+st.sidebar.header("ℹ️ Informasi")
+st.sidebar.write(
+    """
+    Model ini menggunakan:
+    - N-gram Vectorizer
+    - Support Vector Classifier (SVC)
 
-# Ambil fitur n-gram
-ngram_features = np.array(vectorizer.get_feature_names_out())
-num_ngram = len(ngram_features)
-
-# Ambil mask & skor selector
-selector_mask = selector.get_support()
-selector_scores = selector.scores_
-
-# Potong agar ukurannya sama dengan n-gram
-selector_mask_ngram = selector_mask[:num_ngram]
-selector_scores_ngram = selector_scores[:num_ngram]
-
-# Filter fitur terpilih
-selected_features = ngram_features[selector_mask_ngram]
-selected_scores = selector_scores_ngram[selector_mask_ngram]
-
-top_features = (
-    pd.DataFrame({
-        "Fitur": selected_features,
-        "Skor Chi2": selected_scores
-    })
-    .sort_values("Skor Chi2", ascending=False)
-    .head(10)
+    Feature selection (Chi-Square) digunakan saat training,
+    namun tidak diterapkan saat inference untuk menjaga
+    konsistensi fitur.
+    """
 )
-
-st.sidebar.dataframe(top_features, use_container_width=True)
