@@ -151,9 +151,9 @@ if st.button("Prediksi"):
 # ===============================
 st.sidebar.info(
     """
-    ⚠️ Catatan Teknis:
-    Model dilatih dengan pipeline yang berbeda dari inference.
-    Aplikasi ini menyesuaikan fitur secara otomatis agar stabil
-    di environment deployment.
+    Model dikembangkan menggunakan pendekatan supervised learning
+    dengan algoritma Support Vector Classifier (SVC)
+    berbasis fitur N-gram.
     """
 )
+
