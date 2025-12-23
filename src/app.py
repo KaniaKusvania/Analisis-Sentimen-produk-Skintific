@@ -173,16 +173,25 @@ if st.button("Prediksi"):
         st.warning("Teks tidak boleh kosong.")
 
 # ===============================
-# SIDEBAR – TOP N-GRAM
+# SIDEBAR – TOP N-GRAM (AMAN)
 # ===============================
 st.sidebar.header("🔍 Fitur N-gram Terbaik")
 
+# Ambil fitur n-gram
 ngram_features = np.array(vectorizer.get_feature_names_out())
-scores = selector.scores_
+num_ngram = len(ngram_features)
 
-mask = selector.get_support()
-selected_features = ngram_features[mask]
-selected_scores = scores[mask]
+# Ambil mask & skor selector
+selector_mask = selector.get_support()
+selector_scores = selector.scores_
+
+# Potong agar ukurannya sama dengan n-gram
+selector_mask_ngram = selector_mask[:num_ngram]
+selector_scores_ngram = selector_scores[:num_ngram]
+
+# Filter fitur terpilih
+selected_features = ngram_features[selector_mask_ngram]
+selected_scores = selector_scores_ngram[selector_mask_ngram]
 
 top_features = (
     pd.DataFrame({
